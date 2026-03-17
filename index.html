@@ -241,7 +241,7 @@ function calcRoute() {
   }, (result, status) => {
     if (status !== 'OK') { console.warn('Directions error:', status); return; }
     directionsRenderer.setDirections(result);
-    placeStopMarkers();
+          placeStopMarkers(result);
     let totalDist = 0, totalDur = 0;
     result.routes[0].legs.forEach((leg, i) => {
       totalDist += leg.distance.value;
