@@ -135,7 +135,7 @@
   <div id="view-stops">
     <div style="margin-bottom:12px">
       <div class="stops-title">Today's Route</div>
-      <div class="stops-sub">Chicago → Waterford · 6 stops</div>
+      <div class="stops-sub">Costco Michigan Route · 11 stops</div>
       <div class="progress-wrap"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
       <div class="progress-label" id="prog-label">0 of 6 delivered</div>
     </div>
@@ -179,12 +179,16 @@
 
 <script>
 const stops = [
-  { id:1, name:"TechFreight Depot – Chicago",  addr:"1201 W Fulton Market, Chicago, IL 60607",        time:"06:00", load:"Electronics 4.2T",     done:false, dist:"", dur:"" },
-  { id:2, name:"Midwest Distribution Center",  addr:"5500 W 51st St, Chicago, IL 60638",              time:"07:15", load:"Electronics 4.2T",     done:false, dist:"", dur:"" },
-  { id:3, name:"Crown Point Relay Hub",         addr:"Crown Point, IN 46307",                          time:"08:45", load:"Electronics 4.2T",     done:false, dist:"", dur:"" },
-  { id:4, name:"South Bend Transfer",           addr:"3900 McKinley Ave, South Bend, IN 46535",        time:"10:00", load:"Electronics 4.2T",     done:false, dist:"", dur:"" },
-  { id:5, name:"Detroit Metro Depot",           addr:"4250 W Fort St, Detroit, MI 48209",              time:"13:00", load:"Electronics 4.2T",     done:false, dist:"", dur:"" },
-  { id:6, name:"Szott M-59 Toyota",             addr:"4178 Highland Rd, Waterford Township, MI 48328", time:"14:30", load:"Auto Parts - Delivery", done:false, dist:"", dur:"" },
+  { id:1, name:"Start – Concept Drive",         addr:"40985 Concept Dr, Plymouth, MI 48170",                time:"06:00", load:"", done:false, dist:"", dur:"" },
+  { id:2, name:"Costco – Livonia (Haggerty)",   addr:"20000 Haggerty Rd, Livonia, MI 48152",                time:"06:20", load:"", done:false, dist:"", dur:"" },
+  { id:2, name:"Costco – Commerce Township",    addr:"3000 Commerce Crossing, Commerce Township, MI 48390", time:"06:45", load:"", done:false, dist:"", dur:"" },
+  { id:3, name:"Costco – Bloomfield Township",  addr:"2343 S Telegraph Rd, Bloomfield Township, MI 48302",  time:"07:30", load:"", done:false, dist:"", dur:"" },
+  { id:4, name:"Costco – Auburn Hills",         addr:"400 Brown Rd, Auburn Hills, MI 48326",                time:"08:15", load:"", done:false, dist:"", dur:"" },
+  { id:5, name:"Costco – Shelby Township",      addr:"45460 Market St, Shelby Township, MI 48315",          time:"09:15", load:"", done:false, dist:"", dur:"" },
+  { id:6, name:"Costco – Roseville",            addr:"27118 Gratiot Ave, Roseville, MI 48066",              time:"10:00", load:"", done:false, dist:"", dur:"" },
+  { id:7, name:"Costco – Madison Heights",      addr:"30550 Stephenson Hwy, Madison Heights, MI 48071",     time:"11:00", load:"", done:false, dist:"", dur:"" },
+  { id:8, name:"Costco – Livonia (Middlebelt)", addr:"13700 Middlebelt Rd, Livonia, MI 48150",              time:"12:00", load:"", done:false, dist:"", dur:"" },
+  { id:9, name:"Costco – Ann Arbor",            addr:"771 Airport Blvd, Ann Arbor, MI 48108",               time:"13:00", load:"", done:false, dist:"", dur:"" },
 ];
 
 let map, directionsService, directionsRenderer, trafficLayer;
@@ -195,10 +199,11 @@ window.initMap = function() {
     {elementType:"geometry",stylers:[{color:"#1a1f2e"}]},
     {elementType:"labels.text.stroke",stylers:[{color:"#1a1f2e"}]},
     {elementType:"labels.text.fill",stylers:[{color:"#94a3b8"}]},
-    {featureType:"road",elementType:"geometry",stylers:[{color:"#2a3050"}]},
-    {featureType:"road.highway",elementType:"geometry",stylers:[{color:"#f97316"}]},
-    {featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#7c3a0a"}]},
-    {featureType:"road.highway",elementType:"labels.text.fill",stylers:[{color:"#f97316"}]},
+    {featureType:"road",elementType:"geometry",stylers:[{color:"#8c8f96"}]},
+    {featureType:"road",elementType:"geometry.stroke",stylers:[{color:"#6e7178"}]},
+    {featureType:"road.highway",elementType:"geometry",stylers:[{color:"#8c8f96"}]},
+    {featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#6e7178"}]},
+    {featureType:"road.highway",elementType:"labels.text.fill",stylers:[{color:"#333333"}]},
     {featureType:"water",elementType:"geometry",stylers:[{color:"#0d1b2a"}]},
     {featureType:"poi",stylers:[{visibility:"off"}]},
     {featureType:"transit",stylers:[{visibility:"off"}]},
@@ -259,7 +264,7 @@ function placeStopMarkers() {
   stopMarkers = [];
   const geo = new google.maps.Geocoder();
   stops.forEach((s, i) => {
-    const color = s.done ? '#22c55e' : i === stops.length-1 ? '#ef4444' : '#f97316';
+          const color = s.done ? '#16a34a' : i === stops.length-1 ? '#22c55e' : '#22c55e';
     const m = new google.maps.Marker({
       map,
       label:{text: s.done ? '✓' : `${i+1}`, color:'#fff', fontSize:'11px', fontWeight:'800'},
@@ -300,7 +305,7 @@ function updateNextStop() {
 function renderStops() {
   const done = stops.filter(s=>s.done).length, total = stops.length;
   document.getElementById('prog-bar').style.width = `${(done/total)*100}%`;
-  document.getElementById('prog-label').textContent = `${done} of ${total} delivered`;
+  document.getElementById('prog-label').textContent = `${done} of ${total} stops completed`;
   document.getElementById('stop-list').innerHTML = stops.map((s,i) => {
     const isCur = i===currentStop && !s.done;
     const numCls = s.done?'completed':isCur?'current':'pending';
