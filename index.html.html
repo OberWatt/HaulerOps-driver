@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0d0f14"/>
+<title>HaulerOps Driver</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#0d0f14;--surface:#161a24;--card:#1e2335;--border:#2a3050;
+    --accent:#f97316;--adim:rgba(249,115,22,0.15);--green:#22c55e;
+    --yellow:#eab308;--red:#ef4444;--blue:#3b82f6;--muted:#6b7280;
+    --text:#e2e8f0;--dim:#94a3b8;
+  }
+  body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  button{font-family:inherit;cursor:pointer;border:none;outline:none}
+  #header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
+  .logo{display:flex;align-items:center;gap:8px}
+  .logo-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .logo-text{font-size:15px;font-weight:900;letter-spacing:.5px}
+  .logo-text span{color:var(--accent)}
+  .driver-badge{background:var(--adim);border:1px solid var(--accent);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--accent);font-weight:700}
+  #tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-shrink:0}
+  .tab{flex:1;background:transparent;color:var(--dim);border:none;border-bottom:2px solid transparent;padding:9px 4px;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .2s;font-family:inherit}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--adim)}
+  .tab-icon{font-size:15px}
+  #main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  #view-map{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+  #map{flex:1;width:100%;z-index:1}
+  #map-controls{position:absolute;top:8px;right:8px;z-index:5;display:flex;flex-direction:column;gap:5px}
+  .map-ctrl-btn{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.5);white-space:nowrap}
+  .map-ctrl-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  #map-footer{background:var(--surface);border-top:1px solid var(--border);padding:10px 14px;flex-shrink:0;z-index:5}
+  .next-stop-bar{display:flex;align-items:center;gap:10px}
+  .next-stop-icon{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .next-stop-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .next-stop-name{font-size:13px;font-weight:700;color:var(--text)}
+  .next-stop-addr{font-size:11px;color:var(--dim)}
+  .eta-chip{background:var(--adim);border:1px solid var(--accent);border-radius:8px;padding:3px 9px;font-size:11px;color:var(--accent);font-weight:700;margin-top:4px;display:inline-block}
+  .nav-btn{margin-left:auto;background:var(--accent);color:#fff;border-radius:8px;padding:8px 13px;font-size:12px;font-weight:700;flex-shrink:0}
+  #view-stops{flex:1;overflow-y:auto;padding:12px;display:none}
+  .stops-title{font-size:20px;font-weight:800}
+  .stops-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .progress-wrap{margin:12px 0;background:var(--border);border-radius:6px;height:6px}
+  .progress-bar{height:100%;border-radius:6px;background:var(--accent);transition:width .4s}
+  .progress-label{font-size:11px;color:var(--dim);margin-top:4px}
+  .stop-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:9px;display:flex;gap:12px;align-items:flex-start;transition:border-color .2s}
+  .stop-card.done{opacity:.5}
+  .stop-card.active-stop{border-color:var(--accent)}
+  .stop-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:1px}
+  .stop-num.pending{background:var(--adim);color:var(--accent);border:2px solid var(--accent)}
+  .stop-num.current{background:var(--accent);color:#fff;animation:pulse 2s infinite}
+  .stop-num.completed{background:rgba(34,197,94,.15);color:var(--green);border:2px solid var(--green)}
+  .stop-info{flex:1;min-width:0}
+  .stop-name{font-size:14px;font-weight:700;margin-bottom:2px}
+  .stop-addr{font-size:12px;color:var(--dim);margin-bottom:5px}
+  .stop-meta{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:10px;padding:2px 8px;border-radius:12px;font-weight:700}
+  .tag-time{background:rgba(59,130,246,.15);color:var(--blue)}
+  .tag-done{background:rgba(34,197,94,.15);color:var(--green)}
+  .tag-next{background:var(--adim);color:var(--accent)}
+  .tag-dist{background:rgba(59,130,246,.1);color:var(--blue)}
+  .deliver-btn{background:var(--accent);color:#fff;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;flex-shrink:0;align-self:center}
+  #view-info{flex:1;overflow-y:auto;padding:12px;display:none;flex-direction:column;gap:10px}
+  .info-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .info-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+  .info-value{font-size:15px;font-weight:700}
+  .fuel-bar-wrap{background:var(--border);border-radius:4px;height:8px;margin-top:8px}
+  .fuel-bar{height:100%;border-radius:4px}
+  .info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+  .info-row:last-child{border-bottom:none}
+  .sos-btn{background:var(--red);color:#fff;border-radius:10px;padding:12px;font-size:14px;font-weight:800;text-align:center;width:100%;letter-spacing:.5px}
+  #traffic-legend{position:absolute;bottom:130px;left:8px;z-index:5;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10px;color:var(--dim);display:none}
+  .leg-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+  .leg-row:last-child{margin-bottom:0}
+  .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  #loading-overlay{position:absolute;inset:0;background:var(--bg);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  ::-webkit-scrollbar{width:3px}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">🚛</div>
+    <div class="logo-text">HAULER<span>OPS</span></div>
+  </div>
+  <div class="driver-badge">Marcus Reid</div>
+</div>
+
+<div id="tabs">
+  <button class="tab active" onclick="switchTab('map')" id="tab-map"><span class="tab-icon">🗺️</span>Map</button>
+  <button class="tab" onclick="switchTab('stops')" id="tab-stops"><span class="tab-icon">📦</span>Stops</button>
+  <button class="tab" onclick="switchTab('info')" id="tab-info"><span class="tab-icon">🚛</span>My Trip</button>
+</div>
+
+<div id="main">
+  <div id="view-map">
+    <div id="map"></div>
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div style="font-size:13px;color:var(--dim)">Loading map...</div>
+    </div>
+    <div id="map-controls">
+      <button class="map-ctrl-btn active" id="btn-map" onclick="setMapType('roadmap')">🗺 Map</button>
+      <button class="map-ctrl-btn" id="btn-sat" onclick="setMapType('satellite')">🛰 Sat</button>
+      <button class="map-ctrl-btn" id="btn-hybrid" onclick="setMapType('hybrid')">🌍 Hybrid</button>
+      <button class="map-ctrl-btn" id="btn-traffic" onclick="toggleTraffic()">🚦 Traffic</button>
+    </div>
+    <div id="traffic-legend">
+      <div class="leg-row"><div class="leg-dot" style="background:#22c55e"></div>Clear</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#eab308"></div>Moderate</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#ef4444"></div>Heavy</div>
+    </div>
+    <div id="map-footer">
+      <div class="next-stop-bar">
+        <div class="next-stop-icon" id="next-icon">📦</div>
+        <div style="flex:1;min-width:0">
+          <div class="next-stop-label">Next Stop</div>
+          <div class="next-stop-name" id="next-name">Loading route...</div>
+          <div class="next-stop-addr" id="next-addr"></div>
+          <div id="eta-chip" class="eta-chip" style="display:none"></div>
+        </div>
+        <button class="nav-btn" onclick="openNav()">Navigate ↗</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-stops">
+    <div style="margin-bottom:12px">
+      <div class="stops-title">Today's Route</div>
+      <div class="stops-sub">Costco Michigan Route · 11 stops</div>
+      <div class="progress-wrap"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
+      <div class="progress-label" id="prog-label">0 of 6 delivered</div>
+    </div>
+    <div id="stop-list"></div>
+  </div>
+
+  <div id="view-info">
+    <div class="info-card">
+      <div class="info-label">Driver</div>
+      <div class="info-value">Marcus Reid</div>
+      <div style="font-size:12px;color:var(--dim);margin-top:2px">CDL Class A · ID #MR-4821</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Vehicle</div>
+      <div class="info-value">Freightliner Cascadia</div>
+      <div style="font-size:12px;color:var(--dim);margin-top:2px">Plate: IL-TRK-4821</div>
+      <div class="info-label" style="margin-top:12px">Fuel Level</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <div class="info-value" style="color:var(--green)">78%</div>
+        <div style="font-size:11px;color:var(--dim)">~420 mi range</div>
+      </div>
+      <div class="fuel-bar-wrap"><div class="fuel-bar" style="width:78%;background:var(--green)"></div></div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Load</div>
+      <div class="info-value" style="color:var(--accent)">Electronics — 4.2T</div>
+      <div class="info-row"><span style="color:var(--dim);font-size:13px">Shipper</span><span style="font-size:13px;font-weight:600">TechFreight Inc.</span></div>
+      <div class="info-row"><span style="color:var(--dim);font-size:13px">BOL #</span><span style="font-size:13px;font-weight:600">TF-2024-8821</span></div>
+      <div class="info-row"><span style="color:var(--dim);font-size:13px">Temp Req.</span><span style="font-size:13px;font-weight:600">Ambient</span></div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Trip Summary</div>
+      <div class="info-row"><span style="color:var(--dim);font-size:13px">Total Distance</span><span style="font-size:13px;font-weight:600" id="total-dist">Calculating...</span></div>
+      <div class="info-row"><span style="color:var(--dim);font-size:13px">Est. Drive Time</span><span style="font-size:13px;font-weight:600" id="total-time">Calculating...</span></div>
+      <div class="info-row"><span style="color:var(--dim);font-size:13px">Departure</span><span style="font-size:13px;font-weight:600">06:00 AM</span></div>
+      <div class="info-row"><span style="color:var(--dim);font-size:13px">Est. Arrival</span><span style="font-size:13px;font-weight:600" id="eta-val">Calculating...</span></div>
+    </div>
+    <button class="sos-btn" onclick="alert('Dispatch has been notified. Stay on the line.')">🆘 Contact Dispatch</button>
+  </div>
+</div>
+
+<script>
+const stops = [
+  { id:1, name:"Start – Concept Drive",         addr:"40985 Concept Dr, Plymouth, MI 48170",                time:"06:00", load:"", done:false, dist:"", dur:"" },
+  { id:2, name:"Costco – Livonia (Haggerty)",   addr:"20000 Haggerty Rd, Livonia, MI 48152",                time:"06:20", load:"", done:false, dist:"", dur:"" },
+  { id:2, name:"Costco – Commerce Township",    addr:"3000 Commerce Crossing, Commerce Township, MI 48390", time:"06:45", load:"", done:false, dist:"", dur:"" },
+  { id:3, name:"Costco – Bloomfield Township",  addr:"2343 S Telegraph Rd, Bloomfield Township, MI 48302",  time:"07:30", load:"", done:false, dist:"", dur:"" },
+  { id:4, name:"Costco – Auburn Hills",         addr:"400 Brown Rd, Auburn Hills, MI 48326",                time:"08:15", load:"", done:false, dist:"", dur:"" },
+  { id:5, name:"Costco – Shelby Township",      addr:"45460 Market St, Shelby Township, MI 48315",          time:"09:15", load:"", done:false, dist:"", dur:"" },
+  { id:6, name:"Costco – Roseville",            addr:"27118 Gratiot Ave, Roseville, MI 48066",              time:"10:00", load:"", done:false, dist:"", dur:"" },
+  { id:7, name:"Costco – Madison Heights",      addr:"30550 Stephenson Hwy, Madison Heights, MI 48071",     time:"11:00", load:"", done:false, dist:"", dur:"" },
+  { id:8, name:"Costco – Livonia (Middlebelt)", addr:"13700 Middlebelt Rd, Livonia, MI 48150",              time:"12:00", load:"", done:false, dist:"", dur:"" },
+  { id:9, name:"Costco – Ann Arbor",            addr:"771 Airport Blvd, Ann Arbor, MI 48108",               time:"13:00", load:"", done:false, dist:"", dur:"" },
+];
+
+let map, directionsService, directionsRenderer, trafficLayer;
+let trafficOn = false, currentStop = 0, stopMarkers = [];
+
+window.initMap = function() {
+  const darkStyle = [
+    {elementType:"geometry",stylers:[{color:"#1a1f2e"}]},
+    {elementType:"labels.text.stroke",stylers:[{color:"#1a1f2e"}]},
+    {elementType:"labels.text.fill",stylers:[{color:"#94a3b8"}]},
+    {featureType:"road",elementType:"geometry",stylers:[{color:"#8c8f96"}]},
+    {featureType:"road",elementType:"geometry.stroke",stylers:[{color:"#6e7178"}]},
+    {featureType:"road.highway",elementType:"geometry",stylers:[{color:"#8c8f96"}]},
+    {featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#6e7178"}]},
+    {featureType:"road.highway",elementType:"labels.text.fill",stylers:[{color:"#333333"}]},
+    {featureType:"water",elementType:"geometry",stylers:[{color:"#0d1b2a"}]},
+    {featureType:"poi",stylers:[{visibility:"off"}]},
+    {featureType:"transit",stylers:[{visibility:"off"}]},
+    {featureType:"administrative",elementType:"geometry",stylers:[{color:"#2a3050"}]},
+    {featureType:"administrative.locality",elementType:"labels.text.fill",stylers:[{color:"#e2e8f0"}]},
+  ];
+
+  map = new google.maps.Map(document.getElementById('map'), {
+    center:{lat:41.8,lng:-86.0}, zoom:7,
+    mapTypeId:'roadmap', styles:darkStyle,
+    disableDefaultUI:true, zoomControl:true, gestureHandling:'greedy'
+  });
+
+  trafficLayer = new google.maps.TrafficLayer();
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    map, suppressMarkers:true,
+    polylineOptions:{strokeColor:'#f97316',strokeWeight:4,strokeOpacity:0.85}
+  });
+
+  document.getElementById('loading-overlay').style.display = 'none';
+  calcRoute();
+};
+
+function calcRoute() {
+  const remaining = stops.filter(s => !s.done);
+  if (remaining.length < 2) { updateNextStop(); return; }
+  const waypoints = remaining.slice(1,-1).map(s => ({location:s.addr,stopover:true}));
+  directionsService.route({
+    origin: remaining[0].addr,
+    destination: remaining[remaining.length-1].addr,
+    waypoints,
+    travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions:{ departureTime:new Date(), trafficModel:'bestguess' }
+  }, (result, status) => {
+    if (status !== 'OK') { console.warn('Directions error:', status); return; }
+    directionsRenderer.setDirections(result);
+    placeStopMarkers();
+    let totalDist = 0, totalDur = 0;
+    result.routes[0].legs.forEach((leg, i) => {
+      totalDist += leg.distance.value;
+      totalDur += (leg.duration_in_traffic || leg.duration).value;
+      const idx = stops.indexOf(remaining[i+1]);
+      if (idx > -1) { stops[idx].dist = leg.distance.text; stops[idx].dur = (leg.duration_in_traffic||leg.duration).text; }
+    });
+    const mi = (totalDist/1609.34).toFixed(0);
+    const hrs = Math.floor(totalDur/3600), mins = Math.floor((totalDur%3600)/60);
+    document.getElementById('total-dist').textContent = `${mi} mi`;
+    document.getElementById('total-time').textContent = `${hrs}h ${mins}m`;
+    document.getElementById('eta-val').textContent = new Date(Date.now()+totalDur*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    updateNextStop();
+    renderStops();
+  });
+}
+
+function placeStopMarkers() {
+  stopMarkers.forEach(m => m.setMap(null));
+  stopMarkers = [];
+  const geo = new google.maps.Geocoder();
+  stops.forEach((s, i) => {
+          const color = s.done ? '#16a34a' : i === stops.length-1 ? '#22c55e' : '#22c55e';
+    const m = new google.maps.Marker({
+      map,
+      label:{text: s.done ? '✓' : `${i+1}`, color:'#fff', fontSize:'11px', fontWeight:'800'},
+      icon:{path:google.maps.SymbolPath.CIRCLE, scale:14, fillColor:color, fillOpacity:1, strokeColor:'#fff', strokeWeight:2},
+      title: s.name
+    });
+    geo.geocode({address:s.addr}, (res,st) => {
+      if (st==='OK') {
+        m.setPosition(res[0].geometry.location);
+        const iw = new google.maps.InfoWindow({
+          content:`<div style="font-family:system-ui;padding:4px;min-width:160px"><strong>${s.name}</strong><br/><span style="font-size:11px;color:#555">${s.addr}</span><br/><span style="color:#f97316;font-size:11px;font-weight:700">⏱ ${s.time}</span></div>`
+        });
+        m.addListener('click', () => iw.open(map, m));
+      }
+    });
+    stopMarkers.push(m);
+  });
+}
+
+function updateNextStop() {
+  const s = stops[currentStop];
+  if (!s) {
+    document.getElementById('next-name').textContent = 'All stops complete! 🎉';
+    document.getElementById('next-addr').textContent = 'Great work today';
+    document.getElementById('next-icon').textContent = '✅';
+    document.getElementById('eta-chip').style.display = 'none';
+    return;
+  }
+  document.getElementById('next-name').textContent = s.name;
+  document.getElementById('next-addr').textContent = s.addr;
+  if (s.dur) {
+    const c = document.getElementById('eta-chip');
+    c.textContent = `🕐 ${s.dur} away · ${s.dist}`;
+    c.style.display = 'inline-block';
+  }
+}
+
+function renderStops() {
+  const done = stops.filter(s=>s.done).length, total = stops.length;
+  document.getElementById('prog-bar').style.width = `${(done/total)*100}%`;
+  document.getElementById('prog-label').textContent = `${done} of ${total} stops completed`;
+  document.getElementById('stop-list').innerHTML = stops.map((s,i) => {
+    const isCur = i===currentStop && !s.done;
+    const numCls = s.done?'completed':isCur?'current':'pending';
+    const cardCls = s.done?'done':isCur?'active-stop':'';
+    const distTag = s.dist?`<span class="tag tag-dist">📍 ${s.dist}</span>`:'';
+    const stTag = s.done?`<span class="tag tag-done">✓ Delivered</span>`:isCur?`<span class="tag tag-next">▶ Next</span>`:'';
+    const action = s.done
+      ? `<div style="font-size:20px;flex-shrink:0;align-self:center">✅</div>`
+      : isCur ? `<button class="deliver-btn" onclick="markDelivered(${i})">Deliver</button>` : '';
+    return `<div class="stop-card ${cardCls}">
+      <div class="stop-num ${numCls}">${s.done?'✓':i+1}</div>
+      <div class="stop-info">
+        <div class="stop-name">${s.name}</div>
+        <div class="stop-addr">${s.addr}</div>
+        <div class="stop-meta"><span class="tag tag-time">⏱ ${s.time}</span>${distTag}${stTag}</div>
+      </div>${action}</div>`;
+  }).join('');
+}
+
+function markDelivered(i) {
+  stops[i].done = true;
+  currentStop = stops.findIndex(s=>!s.done);
+  if (currentStop===-1) currentStop = stops.length;
+  updateNextStop(); renderStops(); calcRoute();
+}
+
+function setMapType(type) {
+  map.setMapTypeId(type);
+  ['map','sat','hybrid'].forEach(b => document.getElementById(`btn-${b}`).classList.remove('active'));
+  document.getElementById({roadmap:'btn-map',satellite:'btn-sat',hybrid:'btn-hybrid'}[type]).classList.add('active');
+}
+
+function toggleTraffic() {
+  trafficOn = !trafficOn;
+  trafficLayer.setMap(trafficOn ? map : null);
+  document.getElementById('btn-traffic').classList.toggle('active', trafficOn);
+  document.getElementById('traffic-legend').style.display = trafficOn ? 'block' : 'none';
+}
+
+function openNav() {
+  const s = stops[currentStop];
+  if (s) window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.addr)}&travelmode=driving`,'_blank');
+}
+
+function switchTab(name) {
+  ['map','stops','info'].forEach(v => {
+    document.getElementById(`view-${v}`).style.display = 'none';
+    document.getElementById(`tab-${v}`).classList.remove('active');
+  });
+  document.getElementById(`view-${name}`).style.display = name==='info'?'flex':name==='stops'?'block':'flex';
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name==='map' && map) google.maps.event.trigger(map,'resize');
+  if (name==='stops') renderStops();
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_WEJT61V4Zkm5nMIyWGH_AcdNsMHhcsM&callback=initMap&loading=async" async defer></script>
+</body>
+</html>
