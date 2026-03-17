@@ -264,7 +264,7 @@ function placeStopMarkers() {
   stopMarkers = [];
   const geo = new google.maps.Geocoder();
   stops.forEach((s, i) => {
-          const color = s.done ? '#16a34a' : i === stops.length-1 ? '#22c55e' : '#22c55e';
+          const color = s.done ? '#16a34a' : '#22c55e';
     const m = new google.maps.Marker({
       map,
       label:{text: s.done ? '✓' : `${i+1}`, color:'#fff', fontSize:'11px', fontWeight:'800'},
